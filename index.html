@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algorithm Millionaire – ผจญภัยโลกอัลกอริทึม</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts (Kanit & Inter) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'Sarabun', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#06b6d4',
+              600: '#0284c7',
+              700: '#0369a1',
+              900: '#0c4a6e',
+            }
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'pulse-fast': 'pulse 1s infinite',
+            'spin-once': 'spin 0.5s linear',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar & Grid Styles */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* Glassmorphism utility */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Board 11x11 Grid Layout */
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(11, minmax(0, 1fr));
+      grid-template-rows: repeat(11, minmax(0, 1fr));
+      aspect-ratio: 1 / 1;
+      width: 100%;
+      max-width: 820px;
+    }
+
+    /* Tile positions along outer 40 perimeter cells */
+    .tile-0  { grid-area: 11 / 11; }
+    .tile-1  { grid-area: 11 / 10; }
+    .tile-2  { grid-area: 11 / 9; }
+    .tile-3  { grid-area: 11 / 8; }
+    .tile-4  { grid-area: 11 / 7; }
+    .tile-5  { grid-area: 11 / 6; }
+    .tile-6  { grid-area: 11 / 5; }
+    .tile-7  { grid-area: 11 / 4; }
+    .tile-8  { grid-area: 11 / 3; }
+    .tile-9  { grid-area: 11 / 2; }
+    .tile-10 { grid-area: 11 / 1; }
+    .tile-11 { grid-area: 10 / 1; }
+    .tile-12 { grid-area: 9 / 1; }
+    .tile-13 { grid-area: 8 / 1; }
+    .tile-14 { grid-area: 7 / 1; }
+    .tile-15 { grid-area: 6 / 1; }
+    .tile-16 { grid-area: 5 / 1; }
+    .tile-17 { grid-area: 4 / 1; }
+    .tile-18 { grid-area: 3 / 1; }
+    .tile-19 { grid-area: 2 / 1; }
+    .tile-20 { grid-area: 1 / 1; }
+    .tile-21 { grid-area: 1 / 2; }
+    .tile-22 { grid-area: 1 / 3; }
+    .tile-23 { grid-area: 1 / 4; }
+    .tile-24 { grid-area: 1 / 5; }
+    .tile-25 { grid-area: 1 / 6; }
+    .tile-26 { grid-area: 1 / 7; }
+    .tile-27 { grid-area: 1 / 8; }
+    .tile-28 { grid-area: 1 / 9; }
+    .tile-29 { grid-area: 1 / 10; }
+    .tile-30 { grid-area: 1 / 11; }
+    .tile-31 { grid-area: 2 / 11; }
+    .tile-32 { grid-area: 3 / 11; }
+    .tile-33 { grid-area: 4 / 11; }
+    .tile-34 { grid-area: 5 / 11; }
+    .tile-35 { grid-area: 6 / 11; }
+    .tile-36 { grid-area: 7 / 11; }
+    .tile-37 { grid-area: 8 / 11; }
+    .tile-38 { grid-area: 9 / 11; }
+    .tile-39 { grid-area: 10 / 11; }
+
+    .center-panel {
+      grid-area: 2 / 2 / 11 / 11;
+    }
+
+    /* 3D Dice styling */
+    .dice-cube {
+      transform-style: preserve-3d;
+      transition: transform 1s ease-out;
+    }
+
+    /* Player Pawn Animations */
+    .pawn-glow {
+      box-shadow: 0 0 12px currentColor;
+    }
+  </style>
+</head>
+<body class="h-full text-slate-100 flex flex-col font-sans select-none overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950">
+
+  <!-- Header Bar -->
+  <header class="w-full bg-slate-900/90 border-b border-slate-800 px-4 py-2.5 flex justify-between items-center z-20 backdrop-blur sticky top-0">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-cyan-500/20">
+        <i class="fa-solid fa-microchip"></i>
+      </div>
+      <div>
+        <h1 class="text-lg md:text-xl font-bold bg-gradient-to-r from-cyan-400 via-indigo-300 to-purple-400 bg-clip-text text-transparent">
+          Algorithm Millionaire
+        </h1>
+        <p class="text-xs text-slate-400 hidden sm:block">ผจญภัยโลกอัลกอริทึม • วิทยาการคำนวณ ม.1</p>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2 sm:space-x-4">
+      <button onclick="toggleAudio()" id="audioBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm flex items-center gap-2 border border-slate-700 transition">
+        <i class="fa-solid fa-volume-high text-cyan-400" id="audioIcon"></i>
+        <span class="hidden md:inline">เสียง</span>
+      </button>
+
+      <button onclick="openTeacherDashboard()" class="px-3 py-1.5 rounded-lg bg-purple-900/50 hover:bg-purple-800/60 text-purple-200 text-sm flex items-center gap-2 border border-purple-700/50 transition">
+        <i class="fa-solid fa-chalkboard-user text-purple-400"></i>
+        <span class="font-medium">โหมดครู</span>
+      </button>
+
+      <button onclick="resetGamePrompt()" class="px-3 py-1.5 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-sm flex items-center gap-2 border border-rose-800/50 transition">
+        <i class="fa-solid fa-rotate-left"></i>
+        <span class="hidden md:inline">เริ่มใหม่</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center p-2 md:p-4 relative">
+    
+    <!-- SETUP MODAL OVERLAY -->
+    <div id="setupModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-6 relative overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div class="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="text-center space-y-2">
+          <div class="inline-flex p-3 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-1">
+            <i class="fa-solid fa-cubes-stacked text-3xl"></i>
+          </div>
+          <h2 class="text-2xl md:text-3xl font-extrabold text-white">ตั้งค่าการแข่งขัน</h2>
+          <p class="text-slate-400 text-sm">เกมการศึกษาการแก้ปัญหาด้วยอัลกอริทึม รายวิชาวิทยาการคำนวณ ม.1</p>
+        </div>
+
+        <!-- Settings Form -->
+        <div class="space-y-5">
+          <!-- Number of Players -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-300 mb-2">จำนวนผู้เล่น (2 - 4 คน):</label>
+            <div class="grid grid-cols-3 gap-3">
+              <button type="button" onclick="setPlayerCount(2)" id="pCountBtn-2" class="pCountBtn py-2.5 rounded-xl border border-cyan-500 bg-cyan-500/20 text-cyan-300 font-bold transition">2 คน</button>
+              <button type="button" onclick="setPlayerCount(3)" id="pCountBtn-3" class="pCountBtn py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 font-bold hover:bg-slate-700 transition">3 คน</button>
+              <button type="button" onclick="setPlayerCount(4)" id="pCountBtn-4" class="pCountBtn py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 font-bold hover:bg-slate-700 transition">4 คน</button>
+            </div>
+          </div>
+
+          <!-- Player Names -->
+          <div id="playerInputsContainer" class="space-y-3">
+            <!-- Dynamic inputs generated in JS -->
+          </div>
+
+          <!-- Game Limits Settings -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div>
+              <label class="block text-sm font-semibold text-slate-300 mb-1.5">
+                <i class="fa-solid fa-stopwatch text-cyan-400 mr-1"></i> เวลาต่อคำถาม:
+              </label>
+              <select id="timeLimitSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                <option value="20">20 วินาที (ท้าทาย)</option>
+                <option value="30" selected>30 วินาที (มาตรฐาน)</option>
+                <option value="45">45 วินาที (ผ่อนคลาย)</option>
+                <option value="0">ไม่จำกัดเวลา</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-semibold text-slate-300 mb-1.5">
+                <i class="fa-solid fa-flag-checkered text-amber-400 mr-1"></i> จำนวนรอบจบเกม:
+              </label>
+              <select id="maxLapsSelect" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                <option value="1">1 รอบกระดาน (เร็ว)</option>
+                <option value="2" selected>2 รอบกระดาน (แนะนำ)</option>
+                <option value="3">3 รอบกระดาน</option>
+                <option value="5">5 รอบกระดาน</option>
+                <option value="10">10 รอบกระดาน</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="startGame()" class="w-full py-3.5 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-lg rounded-xl shadow-lg shadow-cyan-500/25 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+          <i class="fa-solid fa-play"></i> เริ่มผจญภัย
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN GAME AREA -->
+    <div id="gameBoardWrapper" class="w-full max-w-5xl flex flex-col items-center justify-center gap-4 hidden">
+      
+      <!-- Top Info Dashboard Bar -->
+      <div class="w-full max-w-[820px] bg-slate-900/80 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs md:text-sm shadow-md">
+        <div class="flex items-center space-x-2">
+          <span class="px-2.5 py-1 rounded-md bg-indigo-900/60 text-indigo-300 border border-indigo-700/50 font-medium">
+            <i class="fa-solid fa-arrows-spin mr-1"></i> รอบที่: <span id="currentLapDisplay" class="font-bold text-white">1</span> / <span id="maxLapDisplay">2</span>
+          </span>
+          <span class="px-2.5 py-1 rounded-md bg-cyan-900/60 text-cyan-300 border border-cyan-700/50 font-medium">
+            <i class="fa-solid fa-gamepad mr-1"></i> ตาของ: <span id="activePlayerName" class="font-bold text-white">-</span>
+          </span>
+        </div>
+
+        <!-- Mini Stats Bar for active players -->
+        <div id="topPlayerStats" class="flex items-center gap-3 overflow-x-auto py-1">
+          <!-- Dynamic Mini Cards -->
+        </div>
+      </div>
+
+      <!-- 11x11 BOARD GRID -->
+      <div id="boardGrid" class="board-grid bg-slate-900/90 border-2 border-slate-800 rounded-2xl p-1.5 gap-1 shadow-2xl relative">
+        
+        <!-- CENTER PANEL (Interactive Controls + Stats + Dice) -->
+        <div class="center-panel glass-panel rounded-xl p-4 flex flex-col justify-between items-center relative overflow-hidden border border-slate-800">
+          
+          <!-- Decorative Background Elements -->
+          <div class="absolute inset-0 bg-gradient-to-tr from-cyan-950/20 via-transparent to-purple-950/20 pointer-events-none"></div>
+
+          <!-- Center Top: Active Player Turn & Status Banner -->
+          <div class="w-full text-center space-y-1 z-10">
+            <div id="turnBanner" class="inline-block px-4 py-1.5 rounded-full text-sm font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+              <i class="fa-solid fa-dice mr-1"></i> พร้อมทอยลูกเต๋า
+            </div>
+            <h3 id="centerPlayerTurnText" class="text-base sm:text-lg font-bold text-slate-100">
+              ถึงตาของ <span class="text-cyan-400" id="turnPlayerSpan">ผู้เล่น 1</span>
+            </h3>
+          </div>
+
+          <!-- Center Middle: Interactive 3D Dice Display -->
+          <div class="my-2 flex flex-col items-center justify-center z-10">
+            <div id="diceVisual" class="w-20 h-20 bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-cyan-500/50 rounded-2xl flex items-center justify-center text-4xl text-cyan-400 shadow-xl shadow-cyan-500/10 transition-transform transform">
+              <i class="fa-solid fa-dice-d6"></i>
+            </div>
+            <span id="diceResultText" class="text-xs text-slate-400 mt-2 font-mono">กดปุ่มเพื่อทอยแต้ม (1-6)</span>
+          </div>
+
+          <!-- Center Controls: Roll Button -->
+          <div class="w-full max-w-xs z-10">
+            <button id="rollDiceBtn" onclick="handleDiceRoll()" class="w-full py-3 bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 transition transform active:scale-95 flex items-center justify-center gap-2 text-base">
+              <i class="fa-solid fa-dice-three text-xl"></i> ทอยลูกเต๋า
+            </button>
+          </div>
+
+          <!-- Center Bottom: Live Game Activity Log -->
+          <div class="w-full bg-slate-950/70 border border-slate-800/80 rounded-lg p-2.5 text-xs h-20 overflow-y-auto space-y-1 z-10" id="gameLog">
+            <div class="text-slate-400 italic"><i class="fa-solid fa-info-circle text-cyan-400 mr-1"></i> ต้อนรับสู่อัลกอริทึมเกมเศรษฐี! กดทอยลูกเต๋าเพื่อเริ่มเดิน</div>
+          </div>
+        </div>
+
+        <!-- 40 TILES ARE GENERATED DYNAMICALLY IN JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- QUESTION MODAL -->
+  <div id="questionModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl space-y-5 relative max-h-[95vh] overflow-y-auto">
+      
+      <!-- Top Question Meta -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span id="qCategoryBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            หมวดหมู่
+          </span>
+          <span id="qDifficultyBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            ปานกลาง (+200 คะแนน)
+          </span>
+        </div>
+
+        <!-- Timer -->
+        <div id="timerContainer" class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 text-xs font-mono font-bold text-rose-400">
+          <i class="fa-solid fa-stopwatch animate-pulse"></i>
+          <span id="qTimerText">30s</span>
+        </div>
+      </div>
+
+      <!-- Question Text -->
+      <div class="space-y-2">
+        <h3 id="questionText" class="text-base sm:text-lg md:text-xl font-semibold text-white leading-relaxed">
+          คำถามจะปรากฏที่นี่...
+        </h3>
+      </div>
+
+      <!-- Options Container (MCQ or Sequence Sorting) -->
+      <div id="optionsContainer" class="space-y-2.5">
+        <!-- Dynamic Option Buttons -->
+      </div>
+
+      <!-- Sequence Submit Button (Only used when tile type is 'sequence') -->
+      <div id="sequenceSubmitBox" class="hidden">
+        <button onclick="submitSequenceAnswer()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition">
+          <i class="fa-solid fa-check-circle mr-1"></i> ยืนยันการเรียงลำดับ
+        </button>
+      </div>
+
+      <!-- Explanation Feedback Box (Hidden initially) -->
+      <div id="explanationBox" class="hidden rounded-xl p-4 border space-y-2">
+        <div class="flex items-center gap-2 font-bold text-base" id="explanationResultHeader">
+          <!-- Result Header -->
+        </div>
+        <p id="explanationText" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          คำอธิบายโดยละเอียดจะแสดงตรงนี้...
+        </p>
+        <button onclick="closeQuestionModal()" class="mt-3 w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg text-sm border border-slate-700 transition">
+          ดำเนินเกมต่อ <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- EVENT / TILE MODAL (For Trap, Bonus, Special Tiles) -->
+  <div id="eventModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl relative">
+      <div id="eventIconBox" class="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg">
+        <i class="fa-solid fa-gift"></i>
+      </div>
+      <h3 id="eventTitle" class="text-xl font-bold text-white">หัวข้อกิจกรรม</h3>
+      <p id="eventDescription" class="text-sm text-slate-300 leading-relaxed">รายละเอียดกิจกรรม...</p>
+      <button onclick="closeEventModal()" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold rounded-xl shadow-md transition">
+        ตกลง
+      </button>
+    </div>
+  </div>
+
+  <!-- TEACHER DASHBOARD MODAL -->
+  <div id="teacherModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto relative">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30">
+            <i class="fa-solid fa-chart-pie text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Teacher Dashboard (โหมดวิเคราะห์ผลการเรียนรู้)</h2>
+            <p class="text-xs text-slate-400">สรุปความแม่นยำและจุดที่นักเรียนควรทบทวน รายวิชาวิทยาการคำนวณ ม.1</p>
+          </div>
+        </div>
+        <button onclick="closeTeacherDashboard()" class="text-slate-400 hover:text-white p-2 text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Dashboard Cards Overview -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3.5 text-center">
+          <span class="text-xs text-slate-400 block">จำนวนข้อที่ตอบทั้งหมด</span>
+          <span id="tdTotalAnswered" class="text-2xl font-bold text-cyan-400">0</span>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3.5 text-center">
+          <span class="text-xs text-slate-400 block">ความแม่นยำรวม (Accuracy)</span>
+          <span id="tdOverallAccuracy" class="text-2xl font-bold text-emerald-400">0%</span>
+        </div>
+        <div class="bg-slate-800/60 border border-slate-700 rounded-xl p-3.5 text-center">
+          <span class="text-xs text-slate-400 block">หัวข้อที่ควรเน้นย้ำ</span>
+          <span id="tdWeakTopic" class="text-sm font-bold text-rose-400 truncate block mt-1">-</span>
+        </div>
+      </div>
+
+      <!-- Topic Performance Breakdown -->
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-slate-200">ความเข้าใจแยกตามหมวดหมู่เนื้อหา:</h4>
+        <div id="topicBreakdownContainer" class="space-y-2">
+          <!-- Dynamic Category Progress Bars -->
+        </div>
+      </div>
+
+      <!-- Individual Student Performance Table -->
+      <div class="space-y-2">
+        <h4 class="text-sm font-semibold text-slate-200">ผลการตอบรายบุคคล:</h4>
+        <div class="overflow-x-auto border border-slate-800 rounded-xl">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-800 text-slate-200 font-semibold uppercase">
+              <tr>
+                <th class="p-3">ผู้เล่น</th>
+                <th class="p-3">คะแนนปัจจุบัน</th>
+                <th class="p-3">ตอบถูก / ตอบทั้งหมด</th>
+                <th class="p-3">ความแม่นยำ</th>
+              </tr>
+            </thead>
+            <tbody id="studentStatsTable" class="divide-y divide-slate-800">
+              <!-- Dynamic Rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-purple-950/40 border border-purple-800/50 text-xs text-purple-200 flex items-start gap-2">
+        <i class="fa-solid fa-lightbulb text-purple-400 text-base mt-0.5"></i>
+        <div>
+          <span class="font-bold">ข้อเสนอแนะสำหรับการจัดการเรียนรู้:</span>
+          <p id="teacherRecommendationText">เริ่มเกมและให้นักเรียนตอบคำถามเพื่อสะสมข้อมูลการเรียนรู้...</p>
+        </div>
+      </div>
+
+      <button onclick="closeTeacherDashboard()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-semibold border border-slate-700">
+        ปิดหน้าต่างสรุปผล
+      </button>
+    </div>
+  </div>
+
+  <!-- GAME OVER / LEADERBOARD MODAL -->
+  <div id="gameOverModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 text-center space-y-6 shadow-2xl relative overflow-hidden">
+      <div class="space-y-2">
+        <div class="inline-flex p-4 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+          <i class="fa-solid fa-trophy text-4xl animate-bounce"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-white">สิ้นสุดการแข่งขัน!</h2>
+        <p class="text-slate-400 text-sm">ขอแสดงความยินดีกับผู้ชนะและผู้ผจญภัยทุกคน</p>
+      </div>
+
+      <!-- Leaderboard Podium -->
+      <div id="leaderboardList" class="space-y-3">
+        <!-- Dynamic Ranking Cards -->
+      </div>
+
+      <div class="pt-2 flex gap-3">
+        <button onclick="openTeacherDashboard()" class="flex-1 py-3 bg-purple-900/60 hover:bg-purple-800 text-purple-200 font-bold rounded-xl border border-purple-700/50 text-sm">
+          <i class="fa-solid fa-chart-bar mr-1"></i> ดูโหมดครู
+        </button>
+        <button onclick="location.reload()" class="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg text-sm">
+          <i class="fa-solid fa-rotate-right mr-1"></i> เล่นอีกครั้ง
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Web Audio API Synthesizer (No external audio file dependency)
+    let audioCtx = null;
+    let audioEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const icon = document.getElementById('audioIcon');
+      if (audioEnabled) {
+        icon.className = 'fa-solid fa-volume-high text-cyan-400';
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+      }
+    }
+
+    function playSound(type) {
+      if (!audioEnabled) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'roll') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (type === 'step') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'correct') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        } else if (type === 'wrong') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(180, now + 0.15);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'bonus') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.setValueAtTime(880, now + 0.15);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+        }
+      } catch (e) {
+        console.log('Audio playback error:', e);
+      }
+    }
+
+    const QUESTION_BANK = [
+      // Category 1: ความหมายและขั้นตอนแก้ปัญหา
+      {
+        id: 1,
+        type: 'mcq',
+        category: 'แนวคิดอัลกอริทึม',
+        difficulty: 'easy',
+        question: 'คำว่า "อัลกอริทึม" (Algorithm) หมายถึงข้อใดถูกต้องที่สุด?',
+        options: [
+          'ขั้นตอนการทำงานหรือแก้ปัญหาที่ชัดเจนเป็นลำดับขั้น',
+          'อุปกรณ์ฮาร์ดแวร์สำหรับประมวลผลคำสั่ง',
+          'ภาษาคอมพิวเตอร์ที่ใช้สร้างเว็บไซต์',
+          'การสุ่มหาคำตอบด้วยโปรแกรมคอมพิวเตอร์'
+        ],
+        correct: 0,
+        explanation: 'อัลกอริทึม คือ ลำดับขั้นตอนการทำงานหรือการแก้ปัญหาที่ระบุไว้อย่างชัดเจน เพื่อให้ได้ผลลัพธ์ที่ถูกต้องตามต้องการ'
+      },
+      {
+        id: 2,
+        type: 'mcq',
+        category: 'ขั้นตอนการแก้ปัญหา',
+        difficulty: 'easy',
+        question: 'ข้อใดไม่ใช่คุณสมบัติที่ดีของอัลกอริทึม?',
+        options: [
+          'มีความชัดเจน ไม่กำกวม',
+          'มีจุดเริ่มต้นและจุดสิ้นสุดที่แน่นอน',
+          'มีจำนวนขั้นตอนที่ไม่สิ้นสุด ทำงานไปเรื่อยๆ',
+          'ให้ผลลัพธ์ที่ถูกต้องตามเป้าหมาย'
+        ],
+        correct: 2,
+        explanation: 'อัลกอริทึมที่ดีต้องมีจุดสิ้นสุดการทำงาน (Finiteness) เสมอ ไม่อย่างนั้นโปรแกรมจะทำงานค้างแบบติดลูปไม่สิ้นสุด'
+      },
+      {
+        id: 3,
+        type: 'mcq',
+        category: 'ขั้นตอนการแก้ปัญหา',
+        difficulty: 'medium',
+        question: 'ขั้นตอนแรกสุดของการแก้ปัญหาทางวิทยาการคำนวณคือข้อใด?',
+        options: [
+          'การลงมือเขียนโปรแกรมทันที',
+          'การระบุและทำความเข้าใจปัญหา',
+          'การทดสอบและประเมินผล',
+          'การออกแบบผังงาน (Flowchart)'
+        ],
+        correct: 1,
+        explanation: 'ขั้นตอนแรกที่สำคัญที่สุดคือ "การวิเคราะห์และทำความเข้าใจปัญหา" (Problem Analysis) เพื่อทราบว่า input คืออะไร และต้องการ output อะไร'
+      },
+
+      // Category 2: ผังงานและสัญลักษณ์ Flowchart
+      {
+        id: 4,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'easy',
+        question: 'สัญลักษณ์รูปวงรี (Terminal) ในผังงานใช้แทนสิ่งใด?',
+        options: [
+          'การประมวลผล / คำนวณ',
+          'การตัดสินใจเลือกเงื่อนไข',
+          'จุดเริ่มต้น หรือ จุดสิ้นสุดการทำงาน',
+          'การรับข้อมูลเข้าทางคีย์บอร์ด'
+        ],
+        correct: 2,
+        explanation: 'สัญลักษณ์วงรีหรือแคปซูล (Terminal) ใช้สำหรับแสดงจุดเริ่มต้น (Start) และจุดสิ้นสุด (End) ของผังงาน'
+      },
+      {
+        id: 5,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'easy',
+        question: 'สัญลักษณ์รูปสี่เหลี่ยมผืนผ้า (Process) ในผังงานใช้ทำหน้าที่อะไร?',
+        options: [
+          'การประมวลผล กำหนดค่า หรือการคำนวณ',
+          'การตัดสินใจเงื่อนไข True / False',
+          'การแสดงผลออกทางเครื่องพิมพ์',
+          'จุดเชื่อมต่อผังงาน'
+        ],
+        correct: 0,
+        explanation: 'สี่เหลี่ยมผืนผ้า (Process) ใช้แทนการปฏิบัติงาน การประมวลผล การคำนวณ หรือการกำหนดค่าตัวแปร'
+      },
+      {
+        id: 6,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'medium',
+        question: 'สัญลักษณ์รูปสี่เหลี่ยมข้าวหลามตัด (Decision) ในผังงาน ใช้ในสถานการณ์ใด?',
+        options: [
+          'เมื่อต้องการเชื่อมต่อผังงานคนละหน้า',
+          'เมื่อต้องการตรวจสอบเงื่อนไขเพื่อเลือกทิศทางทำงาน',
+          'เมื่อต้องการพิมพ์รายงานออกทางกระดาษ',
+          'เมื่อต้องการแสดงจุดเริ่มต้นโปรแกรม'
+        ],
+        correct: 1,
+        explanation: 'สี่เหลี่ยมข้าวหลามตัด (Decision) ใช้เมื่อมีเงื่อนไขให้ตรวจสอบ ซึ่งจะมีเส้นทางออกจากสัญลักษณ์อย่างน้อย 2 ทาง คือ จริง (True) และ เท็จ (False)'
+      },
+      {
+        id: 7,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'medium',
+        question: 'สัญลักษณ์วงกลมเล็ก (Connector) ในผังงานมีประโยชน์อย่างไร?',
+        options: [
+          'ใช้แสดงการรับข้อมูลเข้า',
+          'ใช้เป็นจุดเชื่อมต่อของเส้นทางผังงานในหน้าเดียวกัน',
+          'ใช้รับข้อมูลจากแฟ้มข้อมูล',
+          'ใช้เป็นจุดจบของโปรแกรมเท่านั้น'
+        ],
+        correct: 1,
+        explanation: 'วงกลมเล็ก (Connector) ใช้เป็นจุดเชื่อมต่อลูกศรของผังงานภายในหน้าเดียวกัน เพื่อลดความสับสนของเส้นลูกศรที่ตัดกัน'
+      },
+      {
+        id: 8,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'hard',
+        question: 'สัญลักษณ์รูปสี่เหลี่ยมด้านขนาน (Input/Output) ใช้แทนการทำงานแบบใด?',
+        options: [
+          'การรับข้อมูลเข้าหรือแสดงผลโดยไม่ระบุอุปกรณ์เฉพาะเจาะจง',
+          'การคำนวณค่าทางสูตรคณิตศาสตร์',
+          'การประมวลผลซ้ำแบบลูป',
+          'การรับข้อมูลเฉพาะทางแป้นพิมพ์เท่านั้น'
+        ],
+        correct: 0,
+        explanation: 'สี่เหลี่ยมด้านขนาน (General Input/Output) ใช้แสดงการรับข้อมูลเข้า หรือแสดงผลลัพธ์ โดยไม่ระบุชนิดของอุปกรณ์นำเข้า/ส่งออก'
+      },
+
+      // Category 3: โครงสร้างการทำงาน (Sequence, Selection, Loop)
+      {
+        id: 9,
+        type: 'mcq',
+        category: 'โครงสร้างการทำงาน',
+        difficulty: 'easy',
+        question: 'โครงสร้างการทำงานแบบเป็นลำดับ (Sequence) มีลักษณะอย่างไร?',
+        options: [
+          'ทำตามขั้นตอนจากบนลงล่างทีละสั่ง โดยไม่ข้ามขั้นตอน',
+          'มีการตรวจสอบเงื่อนไขก่อนทำเสมอ',
+          'มีการย้อนกลับไปทำขั้นตอนเดิมหลายๆ รอบ',
+          'สุ่มเลือกทำขั้นตอนใดก่อนก็ได้'
+        ],
+        correct: 0,
+        explanation: 'โครงสร้างแบบลำดับ (Sequence) คือการทำงานเรียงลำดับจากขั้นตอนแรกไปขั้นตอนสุดท้ายอย่างเป็นระเบียบตรงไปตรงมา'
+      },
+      {
+        id: 10,
+        type: 'mcq',
+        category: 'โครงสร้างการทำงาน',
+        difficulty: 'medium',
+        question: 'การตัดสินใจว่า "ถ้าฝนตก ให้กางร่ม ถ้าฝนไม่ตก ให้เดินต่อ" เป็นโครงสร้างแบบใด?',
+        options: [
+          'โครงสร้างแบบเรียงลำดับ (Sequence)',
+          'โครงสร้างแบบเงื่อนไข/ทางเลือก (Selection)',
+          'โครงสร้างแบบทำซ้ำ (Loop)',
+          'โครงสร้างแบบขนาน (Parallel)'
+        ],
+        correct: 1,
+        explanation: 'เป็นการทำงานแบบทางเลือก (Selection / Condition) เนื่องจากมีการตรวจสอบเงื่อนไขว่าฝนตกหรือไม่ เพื่อเลือกปฏิบัติตามคำสั่งที่สอดคล้อง'
+      },
+      {
+        id: 11,
+        type: 'mcq',
+        category: 'โครงสร้างการทำงาน',
+        difficulty: 'medium',
+        question: 'สถานการณ์ใดต่อไปนี้จัดเป็นโครงสร้างแบบทำซ้ำ (Loop / Repetition)?',
+        options: [
+          'การกดรหัสผ่าน ATM หากผิดให้ใส่ใหม่ได้ไม่เกิน 3 ครั้ง',
+          'การคำนวณราคาสินค้ารวมภาษีมูลค่าเพิ่ม',
+          'การเปิดคอมพิวเตอร์เข้าสู่ระบบ',
+          'การเลือกซื้อรองเท้าตามสีที่ชอบ'
+        ],
+        correct: 0,
+        explanation: 'การกดรหัสผ่านซ้ำเมื่อผิดพลาด ถือเป็นโครงสร้างแบบทำซ้ำ (Loop) จนกว่าจะถูก หรือทำครบตามจำนวนรอบที่กำหนด'
+      },
+      {
+        id: 12,
+        type: 'mcq',
+        category: 'โครงสร้างการทำงาน',
+        difficulty: 'hard',
+        question: 'ข้อใดคือข้อแตกต่างสำคัญระหว่าง "ทำซ้ำขณะที่" (While Loop) กับ "ทำซ้ำจนกระทั่ง" (Until Loop)?',
+        options: [
+          'While จะทำเมื่อเงื่อนไขเป็นจริง ส่วน Until จะทำจนกว่าเงื่อนไขจะกลายเป็นจริง',
+          'While ไม่ต้องตรวจสอบเงื่อนไข',
+          'Until ทำงานเฉพาะเมื่อเงื่อนไขเป็นจริงเท่านั้น',
+          'ทั้งสองแบบทำงานเหมือนกันทุกประการ'
+        ],
+        correct: 0,
+        explanation: 'While Loop ทำงานวนซ้ำตราบเท่าที่เงื่อนไขยังเป็น "จริง" ส่วน Until Loop จะวนซ้ำไปเรื่อยๆ จนกว่าเงื่อนไขจะกลายเป็น "จริง"'
+      },
+
+      // Category 4: สถานการณ์ในชีวิตประจำวัน & รหัสจำลอง
+      {
+        id: 13,
+        type: 'mcq',
+        category: 'สถานการณ์ในชีวิตประจำวัน',
+        difficulty: 'easy',
+        question: 'ในการเขียนอัลกอริทึม "ต้มบะหมี่กึ่งสำเร็จรูป" ขั้นตอนใดควรทำเป็นอันดับแรกสุด?',
+        options: [
+          'ใส่บะหมี่ลงในชาม',
+          'ต้มน้ำให้เดือด',
+          'เทเครื่องปรุงลงในน้ำ',
+          'ฉีกซองบะหมี่'
+        ],
+        correct: 1,
+        explanation: 'การตั้งน้ำและต้มน้ำให้เดือด มักเป็นขั้นตอนเริ่มต้นสำหรับการต้มบะหมี่ เพื่อเตรียมความพร้อมในการประกอบอาหาร'
+      },
+      {
+        id: 14,
+        type: 'mcq',
+        category: 'สถานการณ์ในชีวิตประจำวัน',
+        difficulty: 'medium',
+        question: 'อัลกอริทึม "การข้ามถนนอย่างปลอดภัย" ควรมีขั้นตอนตรวจสอบเงื่อนไขในข้อใด?',
+        options: [
+          'มองซ้ายและมองขวาว่ามีรถวิ่งมาหรือไม่',
+          'สวมหมวกกันน็อกก่อนข้ามถนน',
+          'วิ่งข้ามถนนให้เร็วที่สุดโดยไม่มองทาง',
+          'นับจำนวนรถที่วิ่งผ่าน'
+        ],
+        correct: 0,
+        explanation: 'เงื่อนไขสำคัญของการข้ามถนนคือ การตรวจสอบว่า "มีรถวิ่งมาหรือไม่" หากไม่มีรถจึงจะสามารถเดินข้ามได้อย่างปลอดภัย'
+      },
+      {
+        id: 15,
+        type: 'mcq',
+        category: 'รหัสจำลอง (Pseudocode)',
+        difficulty: 'medium',
+        question: 'รหัสจำลอง (Pseudocode) คืออะไร?',
+        options: [
+          'การอธิบายขั้นตอนอัลกอริทึมด้วยภาษาพูดที่กระชับ ไม่ขึ้นกับภาษาคอมพิวเตอร์ใด',
+          'ภาษาคอมพิวเตอร์ที่ใช้ควบคุมหุ่นยนต์โดยเฉพาะ',
+          'รหัสลับสำหรับเข้าสู่ระบบเซิร์ฟเวอร์',
+          'ภาพวาดการทำงานของระบบไฟฟ้า'
+        ],
+        correct: 0,
+        explanation: 'รหัสจำลอง (Pseudocode) คือ รหัสที่เขียนอธิบายขั้นตอนการทำงานด้วยภาษาธรรมชาติที่กระชับ เข้าใจง่าย เพื่อเตรียมนำไปเขียนโปรแกรมจริง'
+      },
+      {
+        id: 16,
+        type: 'mcq',
+        category: 'รหัสจำลอง (Pseudocode)',
+        difficulty: 'hard',
+        question: 'พิจารณารหัสจำลองต่อไปนี้:\n1. SCORE = 65\n2. IF SCORE >= 50 THEN PRINT "PASS"\n3. ELSE PRINT "FAIL"\nผลลัพธ์ที่ได้คือข้อใด?',
+        options: [
+          'PASS',
+          'FAIL',
+          'SCORE',
+          'ไม่แสดงผลลัพธ์ใดๆ'
+        ],
+        correct: 0,
+        explanation: 'เนื่องจาก SCORE มีค่า 65 ซึ่งมากกว่าหรือเท่ากับ 50 (65 >= 50 เป็นจริง) จึงทำคำสั่งหลัง THEN แสดงผล "PASS"'
+      },
+      {
+        id: 17,
+        type: 'mcq',
+        category: 'การแก้ปัญหา',
+        difficulty: 'hard',
+        question: 'การค้นหาข้อมูลแบบแบ่งครึ่ง (Binary Search) มีเงื่อนไขเบื้องต้นที่สำคัญที่สุดคือข้อใด?',
+        options: [
+          'ข้อมูลต้องเรียงลำดับจากน้อยไปมากหรือมากไปน้อยก่อน',
+          'ข้อมูลต้องมีจำนวนเป็นเลขคู่เท่านั้น',
+          'ข้อมูลต้องเป็นตัวหนังสือเท่านั้น',
+          'ไม่ต้องเรียงลำดับข้อมูลก่อนทำ'
+        ],
+        correct: 0,
+        explanation: 'Binary Search จะใช้งานได้ต่อเมื่อข้อมูลถูกจัดเรียงลำดับ (Sorted Data) เรียบร้อยแล้วเท่านั้น เพื่อตัดข้อมูลครึ่งหนึ่งที่ไม่เกี่ยวข้องออกได้'
+      },
+
+      // Category 5: Interactive Sequence Ordering Questions
+      {
+        id: 18,
+        type: 'sequence',
+        category: 'การเรียงลำดับขั้นตอน',
+        difficulty: 'medium',
+        question: 'จงเรียงลำดับขั้นตอนอัลกอริทึม "การชงโกโก้ร้อน" ให้ถูกต้อง:',
+        steps: [
+          'ตักผงโกโก้และน้ำตาลใส่แก้ว',
+          'เทน้ำร้อนลงในแก้ว',
+          'คนส่วนผสมให้ละลายเข้ากัน',
+          'เสิร์ฟโกโก้ร้อนพร้อมดื่ม'
+        ],
+        correctOrder: [0, 1, 2, 3],
+        explanation: 'ขั้นตอนที่ถูกต้อง: ตักผงโกโก้ -> เทน้ำร้อน -> คนให้ละลาย -> เสิร์ฟพร้อมดื่ม'
+      },
+      {
+        id: 19,
+        type: 'sequence',
+        category: 'การเรียงลำดับขั้นตอน',
+        difficulty: 'medium',
+        question: 'จงเรียงลำดับขั้นตอนอัลกอริทึม "การส่งการบ้านออนไลน์":',
+        steps: [
+          'เข้าสู่ระบบห้องเรียนออนไลน์',
+          'แนบไฟล์งานการบ้านที่ทำเสร็จแล้ว',
+          'กดปุ่ม "ส่งงาน" (Submit)',
+          'ตรวจสอบสถานะว่าขึ้น "ส่งแล้ว"'
+        ],
+        correctOrder: [0, 1, 2, 3],
+        explanation: 'ลำดับที่ถูกต้อง: เข้าสู่ระบบ -> แนบไฟล์งาน -> กดส่งงาน -> ตรวจสอบสถานะการส่ง'
+      },
+      {
+        id: 20,
+        type: 'sequence',
+        category: 'การเรียงลำดับขั้นตอน',
+        difficulty: 'hard',
+        question: 'จงเรียงลำดับขั้นตอนกระบวนการคิดเชิงคำนวณในการแก้ปัญหา:',
+        steps: [
+          'การย่อยปัญหา (Decomposition)',
+          'การหารูปแบบ (Pattern Recognition)',
+          'การคิดเชิงนามธรรม (Abstraction)',
+          'การออกแบบอัลกอริทึม (Algorithm)'
+        ],
+        correctOrder: [0, 1, 2, 3],
+        explanation: '4 ศิลปะของ Computational Thinking: ย่อยปัญหา -> พิจารณารูปแบบ -> ตัดสาระที่ไม่สำคัญออก (เชิงนามธรรม) -> ออกแบบขั้นตอนอัลกอริทึม'
+      },
+      {
+        id: 21,
+        type: 'mcq',
+        category: 'การวิเคราะห์ปัญหา',
+        difficulty: 'easy',
+        question: 'การย่อยปัญหา (Decomposition) ในแนวคิดเชิงคำนวณหมายถึงอะไร?',
+        options: [
+          'การแตกปัญหาใหญ่ให้อยู่ในรูปแบบปัญหาย่อยๆ เพื่อแก้ได้ง่ายขึ้น',
+          'การละทิ้งปัญหาที่ไม่สนใจออกไป',
+          'การรวบรวมปัญหาหลายๆ อย่างมารวมกัน',
+          'การเขียนโปรแกรมแก้ไขแบบอัตโนมัติ'
+        ],
+        correct: 0,
+        explanation: 'Decomposition คือการแบ่งปัญหาใหญ่ออกเป็นส่วนย่อยๆ เพื่อวิเคราะห์และแก้ไขทีละส่วนได้อย่างมีประสิทธิภาพ'
+      },
+      {
+        id: 22,
+        type: 'mcq',
+        category: 'แนวคิดเชิงคำนวณ',
+        difficulty: 'medium',
+        question: 'ข้อใดคือตัวอย่างของ "การหารูปแบบ" (Pattern Recognition)?',
+        options: [
+          'การสังเกตว่าโจทย์คณิตศาสตร์ข้อนี้มีสูตรคำนวณคล้ายกับโจทย์ข้อที่เคยทำมา',
+          'การถอดปลั๊กไฟทุกครั้งหลังเลิกใช้งาน',
+          'การตั้งชื่อตัวแปรในโปรแกรมภาษา Python',
+          'การจดบันทึกราคาสินค้าประจำวัน'
+        ],
+        correct: 0,
+        explanation: 'Pattern Recognition คือการจดจำและค้นหาความเหมือนหรือรูปแบบความสัมพันธ์ของปัญหาที่เคยเจอมาเพื่อช่วยแก้ปัญหาใหม่'
+      },
+      {
+        id: 23,
+        type: 'mcq',
+        category: 'แนวคิดเชิงคำนวณ',
+        difficulty: 'medium',
+        question: 'การคัดเลือกเฉพาะสาระสำคัญ และตัดรายละเอียดที่ไม่จำเป็นออก เรียกว่าอะไร?',
+        options: [
+          'การคิดเชิงนามธรรม (Abstraction)',
+          'การทำซ้ำ (Loop)',
+          'การเชื่อมต่อ (Connector)',
+          'การทดสอบโปรแกรม (Debugging)'
+        ],
+        correct: 0,
+        explanation: 'Abstraction (คิดเชิงนามธรรม) คือการมุ่งเน้นเฉพาะส่วนที่เป็นสาระสำคัญและคัดส่วนที่ไม่เกี่ยวข้องออกเพื่อให้แก้ปัญหาได้ตรงจุด'
+      },
+      {
+        id: 24,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'medium',
+        question: 'เส้นที่มีหัวศร (Flow line) ในผังงาน ทำหน้าที่อะไร?',
+        options: [
+          'แสดงทิศทางการทำงานของอัลกอริทึม',
+          'แสดงการประมวลผลของเครื่องคอมพิวเตอร์',
+          'แสดงเงื่อนไขที่เป็นเท็จเท่านั้น',
+          'เป็นเส้นขอบตกแต่งผังงาน'
+        ],
+        correct: 0,
+        explanation: 'Flow line (เส้นทิศทาง) ใช้เชื่อมต่อสัญลักษณ์ต่างๆ และชี้บอกทิศทางลำดับการทำงานจากขั้นตอนหนึ่งไปอีกขั้นตอนหนึ่ง'
+      },
+      {
+        id: 25,
+        type: 'mcq',
+        category: 'การตรวจสอบข้อผิดพลาด',
+        difficulty: 'hard',
+        question: 'คำว่า "Bug" (บั๊ก) ในการเขียนโปรแกรมหมายถึงสิ่งใด?',
+        options: [
+          'ข้อผิดพลาดหรือจุดบกพร่องในอัลกอริทึมหรือโปรแกรม',
+          'ไวรัสคอมพิวเตอร์ที่ทำลายฮาร์ดดิสก์',
+          'ความเร็วในการประมวลผลของ CPU',
+          'ตัวแปรประเภทข้อความ'
+        ],
+        correct: 0,
+        explanation: 'Bug หมายถึงข้อผิดพลาดในโปรแกรมที่ทำให้การทำงานหรือผลลัพธ์ไม่ถูกต้อง และกระบวนการแก้ไขจะเรียกว่า Debugging'
+      },
+      {
+        id: 26,
+        type: 'mcq',
+        category: 'สถานการณ์ในชีวิตประจำวัน',
+        difficulty: 'easy',
+        question: 'หากต้องการเรียงลำดับความสูงของเพื่อนในห้องจากน้อยไปมาก ควรใช้อัลกอริทึมใด?',
+        options: [
+          'การเรียงลำดับข้อมูล (Sorting Algorithm)',
+          'การค้นหาข้อมูล (Searching Algorithm)',
+          'การบีบอัดไฟล์ (Compression)',
+          'การสุ่มตัวเลข (Randomization)'
+        ],
+        correct: 0,
+        explanation: 'การจัดเรียงลำดับสิ่งของหรือตัวเลข เรียกว่า Sorting Algorithm เช่น Bubble Sort, Selection Sort เป็นต้น'
+      },
+      {
+        id: 27,
+        type: 'mcq',
+        category: 'โครงสร้างการทำงาน',
+        difficulty: 'medium',
+        question: 'เงื่อนไข "ถ้าอุณหภูมิร่างกาย >= 37.5 องศา ถือว่ามีไข้" หากนาย A อุณหภูมิ 36.8 ผลลัพธ์คืออะไร?',
+        options: [
+          'ไม่มีไข้',
+          'มีไข้',
+          'ระบบขัดข้อง',
+          'ต้องวัดใหม่'
+        ],
+        correct: 0,
+        explanation: '36.8 ไม่มากกว่าหรือเท่ากับ 37.5 เงื่อนไขจึงเป็นเท็จ (False) ผลลัพธ์จึงเป็น "ไม่มีไข้"'
+      },
+      {
+        id: 28,
+        type: 'mcq',
+        category: 'สัญลักษณ์ผังงาน',
+        difficulty: 'hard',
+        question: 'สัญลักษณ์รูปสี่เหลี่ยมตัดมุมซ้ายล่าง (Manual Input) มีไว้เพื่อวัตถุประสงค์ใด?',
+        options: [
+          'การรับข้อมูลเข้าจากผู้ใช้โดยตรง (เช่น คีย์บอร์ด)',
+          'การแสดงผลทางจอภาพ',
+          'การประมวลผลอัตโนมัติ',
+          'การจัดเก็บข้อมูลในดิสก์'
+        ],
+        correct: 0,
+        explanation: 'สัญลักษณ์ Manual Input ใช้แสดงการรับข้อมูลเข้าจากมนุษย์ผ่านแป้นพิมพ์หรืออุปกรณ์ป้อนข้อมูลตรง'
+      },
+      {
+        id: 29,
+        type: 'sequence',
+        category: 'การเรียงลำดับขั้นตอน',
+        difficulty: 'medium',
+        question: 'จงเรียงลำดับขั้นตอนการทอดไข่เจียวให้ถูกวิธี:',
+        steps: [
+          'ตอกไข่ใส่ชามแล้วปรุงรส',
+          'ตีไข่ผสมให้เข้ากัน',
+          'ตั้งกระทะใส่น้ำมันให้ร้อน',
+          'เทไข่ลงกระทะและทอดจนสุก'
+        ],
+        correctOrder: [0, 1, 2, 3],
+        explanation: 'ลำดับขั้นตอนที่ถูกต้อง: ตอกไข่ปรุงรส -> ตีไข่ -> ตั้งกระทะน้ำมันร้อน -> เททอดจนสุก'
+      },
+      {
+        id: 30,
+        type: 'mcq',
+        category: 'แนวคิดอัลกอริทึม',
+        difficulty: 'easy',
+        question: 'การเขียนอัลกอริทึมด้วย "ผังงาน" (Flowchart) มีข้อดีอย่างไรเมื่อเทียบกับข้อความ?',
+        options: [
+          'เข้าใจง่าย เห็นลำดับและภาพรวมของขั้นตอนชัดเจนด้วยสัญลักษณ์',
+          'ใช้เวลาเขียนน้อยกว่าเสมอ',
+          'คอมพิวเตอร์สามารถรันผังงานได้โดยตรงไม่ต้องแปลงภาษา',
+          'ไม่มีข้อดีเลย'
+        ],
+        correct: 0,
+        explanation: 'ผังงานช่วยสื่อสารขั้นตอนอย่างเป็นรูปธรรมด้วยสัญลักษณ์มาตรฐาน ทำให้ผู้อื่นเข้าใจทิศทางการทำงานได้ง่ายขึ้น'
+      }
+    ];
+
+    // 40 Tiles definition for perimeter layout
+    const BOARD_TILES = [
+      { id: 0,  name: 'START', type: 'start', icon: 'fa-flag-checkered', color: 'emerald', desc: 'จุดเริ่มต้น (+100 คะแนน)' },
+      { id: 1,  name: 'ความรู้ 1', type: 'knowledge', icon: 'fa-lightbulb', color: 'blue', category: 'แนวคิดอัลกอริทึม' },
+      { id: 2,  name: 'สถานการณ์ 1', type: 'scenario', icon: 'fa-puzzle-piece', color: 'indigo', category: 'ขั้นตอนการแก้ปัญหา' },
+      { id: 3,  name: 'โบนัสไอที', type: 'bonus', icon: 'fa-gift', color: 'amber', desc: 'รับ +200 คะแนนพิเศษ!' },
+      { id: 4,  name: 'สัญลักษณ์ 1', type: 'knowledge', icon: 'fa-shapes', color: 'blue', category: 'สัญลักษณ์ผังงาน' },
+      { id: 5,  name: 'เรียงลำดับ 1', type: 'sequence', icon: 'fa-list-ol', color: 'purple', category: 'การเรียงลำดับขั้นตอน' },
+      { id: 6,  name: 'กับดักไวรัส', type: 'trap', icon: 'fa-bug', color: 'rose', desc: 'โดนไวรัสโจมตี (-100 คะแนน)' },
+      { id: 7,  name: 'โครงสร้าง 1', type: 'knowledge', icon: 'fa-sitemap', color: 'blue', category: 'โครงสร้างการทำงาน' },
+      { id: 8,  name: 'สถานการณ์ 2', type: 'scenario', icon: 'fa-brain', color: 'indigo', category: 'สถานการณ์ในชีวิตประจำวัน' },
+      { id: 9,  name: 'ช่องพิเศษ', type: 'special', icon: 'fa-shield-halved', color: 'cyan', desc: 'ได้รับเกราะป้องกันกับดัก!' },
+      { id: 10, name: 'จุดพักผ่อน', type: 'knowledge', icon: 'fa-mug-hot', color: 'blue', category: 'แนวคิดเชิงคำนวณ' },
+      { id: 11, name: 'สัญลักษณ์ 2', type: 'knowledge', icon: 'fa-draw-polygon', color: 'blue', category: 'สัญลักษณ์ผังงาน' },
+      { id: 12, name: 'เรียงลำดับ 2', type: 'sequence', icon: 'fa-arrow-down-1-9', color: 'purple', category: 'การเรียงลำดับขั้นตอน' },
+      { id: 13, name: 'โบนัสโค้ด', type: 'bonus', icon: 'fa-star', color: 'amber', desc: 'ได้รับทุนการศึกษา +200 คะแนน' },
+      { id: 14, name: 'รหัสจำลอง 1', type: 'knowledge', icon: 'fa-code', color: 'blue', category: 'รหัสจำลอง (Pseudocode)' },
+      { id: 15, name: 'สถานการณ์ 3', type: 'scenario', icon: 'fa-laptop-code', color: 'indigo', category: 'การวิเคราะห์ปัญหา' },
+      { id: 16, name: 'กับดักเน็ตหลุด', type: 'trap', icon: 'fa-wifi', color: 'rose', desc: 'สัญญาณขาดหาย (-100 คะแนน)' },
+      { id: 17, name: 'โครงสร้าง 2', type: 'knowledge', icon: 'fa-arrows-split-up-and-left', color: 'blue', category: 'โครงสร้างการทำงาน' },
+      { id: 18, name: 'เรียงลำดับ 3', type: 'sequence', icon: 'fa-list-check', color: 'purple', category: 'การเรียงลำดับขั้นตอน' },
+      { id: 19, name: 'ช่องทอยฟรี', type: 'special', icon: 'fa-dice', color: 'cyan', desc: 'สิทธิ์ทอยลูกเต๋าฟรีอีก 1 ครั้ง!' },
+      { id: 20, name: 'จุดพักครึ่ง', type: 'knowledge', icon: 'fa-pause', color: 'blue', category: 'แนวคิดอัลกอริทึม' },
+      { id: 21, name: 'สัญลักษณ์ 3', type: 'knowledge', icon: 'fa-icons', color: 'blue', category: 'สัญลักษณ์ผังงาน' },
+      { id: 22, name: 'สถานการณ์ 4', type: 'scenario', icon: 'fa-user-gear', color: 'indigo', category: 'การแก้ปัญหา' },
+      { id: 23, name: 'โบนัส AI', type: 'bonus', icon: 'fa-robot', color: 'amber', desc: 'AI ช่วยประมวลผล (+200 คะแนน)' },
+      { id: 24, name: 'โครงสร้าง 3', type: 'knowledge', icon: 'fa-repeat', color: 'blue', category: 'โครงสร้างการทำงาน' },
+      { id: 25, name: 'เรียงลำดับ 4', type: 'sequence', icon: 'fa-sort', color: 'purple', category: 'การเรียงลำดับขั้นตอน' },
+      { id: 26, name: 'กับดักบั๊ก', type: 'trap', icon: 'fa-triangle-exclamation', color: 'rose', desc: 'เจอระบบบั๊ก (-100 คะแนน)' },
+      { id: 27, name: 'รหัสจำลอง 2', type: 'knowledge', icon: 'fa-file-code', color: 'blue', category: 'รหัสจำลอง (Pseudocode)' },
+      { id: 28, name: 'สถานการณ์ 5', type: 'scenario', icon: 'fa-magnifying-glass-chart', color: 'indigo', category: 'สถานการณ์ในชีวิตประจำวัน' },
+      { id: 29, name: 'เกราะป้องกัน', type: 'special', icon: 'fa-shield-cat', color: 'cyan', desc: 'ได้รับเกราะคุ้มกันภัย!' },
+      { id: 30, name: 'มุมอัลกอริทึม', type: 'knowledge', icon: 'fa-graduation-cap', color: 'blue', category: 'แนวคิดเชิงคำนวณ' },
+      { id: 31, name: 'สัญลักษณ์ 4', type: 'knowledge', icon: 'fa-diagram-project', color: 'blue', category: 'สัญลักษณ์ผังงาน' },
+      { id: 32, name: 'เรียงลำดับ 5', type: 'sequence', icon: 'fa-bars-staggered', color: 'purple', category: 'การเรียงลำดับขั้นตอน' },
+      { id: 33, name: 'โบนัสคลาวด์', type: 'bonus', icon: 'fa-cloud-arrow-up', color: 'amber', desc: 'อัปโหลดสำเร็จ (+200 คะแนน)' },
+      { id: 34, name: 'โครงสร้าง 4', type: 'knowledge', icon: 'fa-network-wired', color: 'blue', category: 'โครงสร้างการทำงาน' },
+      { id: 35, name: 'สถานการณ์ 6', type: 'scenario', icon: 'fa-headset', color: 'indigo', category: 'การวิเคราะห์ปัญหา' },
+      { id: 36, name: 'กับดักระบบล่ม', type: 'trap', icon: 'fa-server', color: 'rose', desc: 'เซิร์ฟเวอร์ล่ม (-100 คะแนน)' },
+      { id: 37, name: 'ความรู้รวม', type: 'knowledge', icon: 'fa-book-open', color: 'blue', category: 'แนวคิดอัลกอริทึม' },
+      { id: 38, name: 'เรียงลำดับ 6', type: 'sequence', icon: 'fa-layer-group', color: 'purple', category: 'การเรียงลำดับขั้นตอน' },
+      { id: 39, name: 'สถานการณ์จบ', type: 'scenario', icon: 'fa-flag-checkered', color: 'indigo', category: 'การแก้ปัญหา' },
+    ];
+
+    const PLAYER_AVATARS = [
+      { name: 'หุ่นยนต์ไซเบอร์', icon: 'fa-robot', color: 'emerald', bg: 'bg-emerald-500', text: 'text-emerald-400', border: 'border-emerald-500' },
+      { name: 'นักโปรแกรมเมอร์', icon: 'fa-user-ninja', color: 'cyan', bg: 'bg-cyan-500', text: 'text-cyan-400', border: 'border-cyan-500' },
+      { name: 'วิศวกรซอฟต์แวร์', icon: 'fa-user-astronaut', color: 'purple', bg: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500' },
+      { name: 'แฮกเกอร์สายขาว', icon: 'fa-user-secret', color: 'amber', bg: 'bg-amber-500', text: 'text-amber-400', border: 'border-amber-500' }
+    ];
+
+    let gameState = {
+      playerCount: 2,
+      players: [],
+      activePlayerIndex: 0,
+      timeLimit: 30, // seconds
+      maxLaps: 2,
+      isRolling: false,
+      isMoving: false,
+      currentTurnLap: 1,
+      currentQuestion: null,
+      questionTimer: null,
+      questionTimeLeft: 0,
+      selectedSequence: [],
+      teacherData: {
+        totalAnswered: 0,
+        totalCorrect: 0,
+        categoryStats: {}
+      }
+    };
+
+    window.onload = function() {
+      setPlayerCount(2);
+      renderBoardGrid();
+    };
+
+    function setPlayerCount(count) {
+      gameState.playerCount = count;
+      document.querySelectorAll('.pCountBtn').forEach((btn, idx) => {
+        if (idx + 2 === count) {
+          btn.className = 'pCountBtn py-2.5 rounded-xl border border-cyan-500 bg-cyan-500/20 text-cyan-300 font-bold transition';
+        } else {
+          btn.className = 'pCountBtn py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-400 font-bold hover:bg-slate-700 transition';
+        }
+      });
+
+      const container = document.getElementById('playerInputsContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < count; i++) {
+        const avatar = PLAYER_AVATARS[i];
+        container.innerHTML += `
+          <div class="flex items-center space-x-3 bg-slate-800/80 p-2.5 rounded-xl border border-slate-700">
+            <div class="w-9 h-9 rounded-lg ${avatar.bg} text-white flex items-center justify-center font-bold text-lg shadow">
+              <i class="fa-solid ${avatar.icon}"></i>
+            </div>
+            <input type="text" id="pNameInput-${i}" value="ผู้เล่น ${i + 1}" placeholder="ชื่อผู้เล่น ${i + 1}"
+                   class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+          </div>
+        `;
+      }
+    }
+
+    function startGame() {
+      initAudio();
+      const timeSelect = document.getElementById('timeLimitSelect');
+      const lapSelect = document.getElementById('maxLapsSelect');
+
+      gameState.timeLimit = parseInt(timeSelect.value);
+      gameState.maxLaps = parseInt(lapSelect.value);
+
+      gameState.players = [];
+      for (let i = 0; i < gameState.playerCount; i++) {
+        const nameInput = document.getElementById(`pNameInput-${i}`);
+        const name = nameInput ? nameInput.value.trim() || `ผู้เล่น ${i+1}` : `ผู้เล่น ${i+1}`;
+        const avatar = PLAYER_AVATARS[i];
+
+        gameState.players.push({
+          id: i,
+          name: name,
+          avatar: avatar,
+          position: 0,
+          score: 0,
+          laps: 0,
+          hasShield: false,
+          stats: {
+            total: 0,
+            correct: 0,
+            wrongTopics: {}
+          }
+        });
+      }
+
+      gameState.activePlayerIndex = 0;
+      document.getElementById('setupModal').classList.add('hidden');
+      document.getElementById('gameBoardWrapper').classList.remove('hidden');
+
+      document.getElementById('maxLapDisplay').innerText = gameState.maxLaps;
+      updateHeaderStats();
+      renderBoardPawns();
+      logActivity(`เกมเริ่มแล้ว! ผู้เล่นทุกคนเริ่มที่จุด START`);
+    }
+
+    function renderBoardGrid() {
+      const board = document.getElementById('boardGrid');
+      // Keep center panel intact, clear previous tiles
+      const tiles = board.querySelectorAll('.board-tile');
+      tiles.forEach(t => t.remove());
+
+      BOARD_TILES.forEach((tile, index) => {
+        const tileDiv = document.createElement('div');
+        tileDiv.className = `board-tile tile-${index} bg-slate-800/90 border border-slate-700/80 rounded-lg p-1 flex flex-col justify-between items-center relative hover:border-cyan-400 transition cursor-pointer overflow-hidden`;
+        
+        let colorClasses = 'text-cyan-400 border-slate-700';
+        if (tile.type === 'start') colorClasses = 'bg-emerald-950/60 border-emerald-500/50 text-emerald-300';
+        else if (tile.type === 'bonus') colorClasses = 'bg-amber-950/40 border-amber-500/40 text-amber-300';
+        else if (tile.type === 'trap') colorClasses = 'bg-rose-950/40 border-rose-500/40 text-rose-300';
+        else if (tile.type === 'special') colorClasses = 'bg-cyan-950/40 border-cyan-500/40 text-cyan-300';
+        else if (tile.type === 'sequence') colorClasses = 'bg-purple-950/40 border-purple-500/40 text-purple-300';
+        else if (tile.type === 'scenario') colorClasses = 'bg-indigo-950/40 border-indigo-500/40 text-indigo-300';
+
+        tileDiv.className += ` ${colorClasses}`;
+
+        tileDiv.innerHTML = `
+          <div class="text-[9px] font-bold truncate max-w-full opacity-80">${index}. ${tile.name}</div>
+          <div class="my-auto text-xs sm:text-sm md:text-base">
+            <i class="fa-solid ${tile.icon}"></i>
+          </div>
+          <div id="pawnBox-${index}" class="flex flex-wrap gap-0.5 justify-center items-center min-h-[14px]"></div>
+        `;
+
+        tileDiv.onclick = () => {
+          logActivity(`ช่อง ${index}: ${tile.name} (${tile.desc || tile.category || ''})`);
+        };
+
+        board.appendChild(tileDiv);
+      });
+    }
+
+    function renderBoardPawns() {
+      // Clear pawns from all tiles
+      for (let i = 0; i < 40; i++) {
+        const box = document.getElementById(`pawnBox-${i}`);
+        if (box) box.innerHTML = '';
+      }
+
+      // Render players on their current position
+      gameState.players.forEach((player) => {
+        const box = document.getElementById(`pawnBox-${player.position}`);
+        if (box) {
+          const pawn = document.createElement('div');
+          pawn.className = `w-3.5 h-3.5 rounded-full ${player.avatar.bg} text-white flex items-center justify-center text-[8px] font-bold shadow-md pawn-glow transform hover:scale-125 transition`;
+          pawn.title = player.name;
+          pawn.innerHTML = `<i class="fa-solid ${player.avatar.icon}"></i>`;
+          box.appendChild(pawn);
+        }
+      });
+    }
+
+    function updateHeaderStats() {
+      const activePlayer = gameState.players[gameState.activePlayerIndex];
+      document.getElementById('activePlayerName').innerText = activePlayer.name;
+      document.getElementById('turnPlayerSpan').innerText = activePlayer.name;
+      document.getElementById('turnPlayerSpan').className = activePlayer.avatar.text + ' font-bold';
+      document.getElementById('currentLapDisplay').innerText = Math.max(1, activePlayer.laps + 1);
+
+      const statsContainer = document.getElementById('topPlayerStats');
+      statsContainer.innerHTML = '';
+
+      gameState.players.forEach((p, idx) => {
+        const isActive = idx === gameState.activePlayerIndex;
+        statsContainer.innerHTML += `
+          <div class="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg ${isActive ? 'bg-slate-800 border-2 ' + p.avatar.border : 'bg-slate-950/60 border border-slate-800'}">
+            <div class="w-5 h-5 rounded-md ${p.avatar.bg} text-white flex items-center justify-center text-[10px]">
+              <i class="fa-solid ${p.avatar.icon}"></i>
+            </div>
+            <span class="text-xs font-semibold ${isActive ? 'text-white' : 'text-slate-400'}">${p.name}:</span>
+            <span class="text-xs font-bold text-amber-400">${p.score} pt</span>
+            ${p.hasShield ? '<i class="fa-solid fa-shield-halved text-cyan-400 text-xs" title="มีเกราะ"></i>' : ''}
+          </div>
+        `;
+      });
+    }
+
+    function logActivity(msg) {
+      const log = document.getElementById('gameLog');
+      const time = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const entry = document.createElement('div');
+      entry.className = 'text-slate-300';
+      entry.innerHTML = `<span class="text-slate-500 text-[10px]">[${time}]</span> ${msg}`;
+      log.prepend(entry);
+    }
+
+    function handleDiceRoll() {
+      if (gameState.isRolling || gameState.isMoving) return;
+
+      gameState.isRolling = true;
+      const rollBtn = document.getElementById('rollDiceBtn');
+      rollBtn.disabled = true;
+      rollBtn.classList.add('opacity-50');
+
+      const diceVisual = document.getElementById('diceVisual');
+      const diceResultText = document.getElementById('diceResultText');
+
+      playSound('roll');
+
+      let rollCount = 0;
+      const interval = setInterval(() => {
+        const tempVal = Math.floor(Math.random() * 6) + 1;
+        diceVisual.innerHTML = `<i class="fa-solid fa-dice-${getDiceIconWord(tempVal)}"></i>`;
+        rollCount++;
+        if (rollCount > 10) {
+          clearInterval(interval);
+          const finalVal = Math.floor(Math.random() * 6) + 1;
+          diceVisual.innerHTML = `<i class="fa-solid fa-dice-${getDiceIconWord(finalVal)}"></i>`;
+          diceResultText.innerText = `ทอยได้ ${finalVal} แต้ม!`;
+          
+          gameState.isRolling = false;
+          movePlayerSteps(finalVal);
+        }
+      }, 80);
+    }
+
+    function getDiceIconWord(num) {
+      const words = ['one', 'two', 'three', 'four', 'five', 'six'];
+      return words[num - 1] || 'one';
+    }
+
+    function movePlayerSteps(steps) {
+      gameState.isMoving = true;
+      const activePlayer = gameState.players[gameState.activePlayerIndex];
+
+      let remaining = steps;
+      logActivity(`<b class="${activePlayer.avatar.text}">${activePlayer.name}</b> ทอยลูกเต๋าได้ ${steps} แต้ม`);
+
+      const moveInterval = setInterval(() => {
+        if (remaining > 0) {
+          activePlayer.position = (activePlayer.position + 1) % 40;
+          playSound('step');
+
+          // Pass Start check
+          if (activePlayer.position === 0) {
+            activePlayer.laps += 1;
+            activePlayer.score += 100;
+            playSound('bonus');
+            logActivity(`<span class="text-emerald-400">🏁 ${activePlayer.name} เดินครบรอบ! (+100 คะแนน)</span>`);
+          }
+
+          renderBoardPawns();
+          updateHeaderStats();
+          remaining--;
+        } else {
+          clearInterval(moveInterval);
+          gameState.isMoving = false;
+          
+          // Check game end condition by laps
+          if (activePlayer.laps >= gameState.maxLaps) {
+            checkGameOver();
+            return;
+          }
+
+          // Trigger Tile Event
+          handleTileEvent(activePlayer.position);
+        }
+      }, 250);
+    }
+
+    function handleTileEvent(tileIndex) {
+      const tile = BOARD_TILES[tileIndex];
+      const player = gameState.players[gameState.activePlayerIndex];
+
+      if (tile.type === 'start') {
+        player.score += 100;
+        showEventModal('จุดเริ่มต้น (START)', 'คุณได้รับคะแนนโบนัส +100 คะแนน!', 'text-emerald-400', 'fa-flag-checkered');
+        logActivity(`${player.name} ตกช่อง Start ได้รับ +100 คะแนน`);
+      } else if (tile.type === 'bonus') {
+        player.score += 200;
+        playSound('bonus');
+        showEventModal('ช่องโบนัส!', 'ยินดีด้วย! คุณได้รับโบนัสพิเศษ +200 คะแนน', 'text-amber-400', 'fa-gift');
+        logActivity(`${player.name} ตกช่องโบนัส ได้รับ +200 คะแนน`);
+      } else if (tile.type === 'trap') {
+        if (player.hasShield) {
+          player.hasShield = false;
+          showEventModal('ใช้เกราะป้องกัน!', 'เกราะช่วยป้องกันไม่ให้เสียคะแนนจากกับดัก!', 'text-cyan-400', 'fa-shield');
+          logActivity(`${player.name} ใช้เกราะป้องกันกับดัก`);
+        } else {
+          player.score = Math.max(0, player.score - 100);
+          playSound('wrong');
+          showEventModal('ตกกับดัก!', 'คุณโดนไวรัส/ปัญหาคอมพิวเตอร์ (-100 คะแนน)', 'text-rose-400', 'fa-bug');
+          logActivity(`${player.name} ตกกับดัก เสีย -100 คะแนน`);
+        }
+      } else if (tile.type === 'special') {
+        player.hasShield = true;
+        playSound('bonus');
+        showEventModal('ช่องพิเศษ!', 'คุณได้รับ "เกราะป้องกัน" ลบความเสียหายจากกับดัก 1 ครั้ง!', 'text-cyan-400', 'fa-shield-halved');
+        logActivity(`${player.name} ได้รับเกราะป้องกัน`);
+      } else {
+        // Questions: Knowledge, Scenario, Sequence
+        openQuestionModal(tile.category || 'แนวคิดอัลกอริทึม', tile.type);
+      }
+
+      updateHeaderStats();
+    }
+
+    function openQuestionModal(category, tileType) {
+      // Pick question matching category or tileType
+      let eligibleQuestions = QUESTION_BANK.filter(q => q.category === category);
+      if (tileType === 'sequence') {
+        eligibleQuestions = QUESTION_BANK.filter(q => q.type === 'sequence');
+      }
+      if (eligibleQuestions.length === 0) {
+        eligibleQuestions = QUESTION_BANK;
+      }
+
+      const q = eligibleQuestions[Math.floor(Math.random() * eligibleQuestions.length)];
+      gameState.currentQuestion = q;
+
+      document.getElementById('qCategoryBadge').innerText = q.category;
+      
+      const diffBadge = document.getElementById('qDifficultyBadge');
+      if (q.difficulty === 'easy') {
+        diffBadge.innerText = 'ระดับง่าย (+100 คะแนน)';
+        diffBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+      } else if (q.difficulty === 'medium') {
+        diffBadge.innerText = 'ระดับปานกลาง (+200 คะแนน)';
+        diffBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      } else {
+        diffBadge.innerText = 'ระดับยาก (+300 คะแนน)';
+        diffBadge.className = 'px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+      }
+
+      document.getElementById('questionText').innerText = q.question;
+      document.getElementById('explanationBox').classList.add('hidden');
+      document.getElementById('sequenceSubmitBox').classList.add('hidden');
+
+      const optionsContainer = document.getElementById('optionsContainer');
+      optionsContainer.innerHTML = '';
+
+      if (q.type === 'mcq') {
+        q.options.forEach((opt, idx) => {
+          optionsContainer.innerHTML += `
+            <button onclick="checkMcqAnswer(${idx})" class="mcq-opt-btn w-full p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-left text-xs sm:text-sm text-slate-200 transition flex items-center gap-3">
+              <span class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700 text-cyan-400 font-bold flex items-center justify-center text-xs shrink-0">${String.fromCharCode(65 + idx)}</span>
+              <span>${opt}</span>
+            </button>
+          `;
+        });
+      } else if (q.type === 'sequence') {
+        gameState.selectedSequence = [];
+        // Shuffle steps display initial order
+        let shuffled = q.steps.map((text, origIdx) => ({ text, origIdx })).sort(() => Math.random() - 0.5);
+        
+        shuffled.forEach((step, idx) => {
+          optionsContainer.innerHTML += `
+            <div id="seqItem-${idx}" onclick="toggleSequenceStep(${idx}, ${step.origIdx})" class="seq-item cursor-pointer p-3 rounded-xl bg-slate-800 border border-slate-700 text-xs sm:text-sm text-slate-200 flex items-center justify-between transition hover:border-purple-400">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-grip-vertical text-slate-500"></i>
+                <span>${step.text}</span>
+              </div>
+              <span id="seqBadge-${idx}" class="w-6 h-6 rounded-full bg-slate-900 text-slate-400 border border-slate-700 text-xs font-bold flex items-center justify-center">-</span>
+            </div>
+          `;
+        });
+        document.getElementById('sequenceSubmitBox').classList.remove('hidden');
+      }
+
+      // Start Timer if set
+      startQuestionTimer();
+
+      document.getElementById('questionModal').classList.remove('hidden');
+    }
+
+    function toggleSequenceStep(itemIdx, origIdx) {
+      const existingPos = gameState.selectedSequence.findIndex(s => s.itemIdx === itemIdx);
+      if (existingPos >= 0) {
+        // Deselect
+        gameState.selectedSequence.splice(existingPos, 1);
+      } else {
+        // Select next order number
+        gameState.selectedSequence.push({ itemIdx, origIdx });
+      }
+
+      // Update badges
+      const q = gameState.currentQuestion;
+      q.steps.forEach((_, idx) => {
+        const badge = document.getElementById(`seqBadge-${idx}`);
+        const item = document.getElementById(`seqItem-${idx}`);
+        const pos = gameState.selectedSequence.findIndex(s => s.itemIdx === idx);
+
+        if (pos >= 0) {
+          badge.innerText = pos + 1;
+          badge.className = 'w-6 h-6 rounded-full bg-purple-500 text-white font-bold flex items-center justify-center text-xs';
+          item.className = 'seq-item cursor-pointer p-3 rounded-xl bg-purple-950/60 border border-purple-500 text-xs sm:text-sm text-purple-200 flex items-center justify-between';
+        } else {
+          badge.innerText = '-';
+          badge.className = 'w-6 h-6 rounded-full bg-slate-900 text-slate-400 border border-slate-700 text-xs font-bold flex items-center justify-center';
+          item.className = 'seq-item cursor-pointer p-3 rounded-xl bg-slate-800 border border-slate-700 text-xs sm:text-sm text-slate-200 flex items-center justify-between hover:border-purple-400';
+        }
+      });
+    }
+
+    function startQuestionTimer() {
+      clearInterval(gameState.questionTimer);
+      const timerBox = document.getElementById('timerContainer');
+      const timerText = document.getElementById('qTimerText');
+
+      if (gameState.timeLimit <= 0) {
+        timerBox.classList.add('hidden');
+        return;
+      }
+
+      timerBox.classList.remove('hidden');
+      gameState.questionTimeLeft = gameState.timeLimit;
+      timerText.innerText = `${gameState.questionTimeLeft}s`;
+
+      gameState.questionTimer = setInterval(() => {
+        gameState.questionTimeLeft--;
+        timerText.innerText = `${gameState.questionTimeLeft}s`;
+
+        if (gameState.questionTimeLeft <= 0) {
+          clearInterval(gameState.questionTimer);
+          // Timeout = Incorrect
+          handleQuestionAnswer(false, 'หมดเวลาตอบคำถาม!');
+        }
+      }, 1000);
+    }
+
+    function checkMcqAnswer(selectedIdx) {
+      clearInterval(gameState.questionTimer);
+      const q = gameState.currentQuestion;
+      const isCorrect = selectedIdx === q.correct;
+      handleQuestionAnswer(isCorrect);
+    }
+
+    function submitSequenceAnswer() {
+      clearInterval(gameState.questionTimer);
+      const q = gameState.currentQuestion;
+      if (gameState.selectedSequence.length < q.steps.length) {
+        logActivity('กรุณาเลือกเรียงลำดับให้ครบทุกขั้นตอนก่อน!');
+        return;
+      }
+
+      const userOrder = gameState.selectedSequence.map(s => s.origIdx);
+      const isCorrect = JSON.stringify(userOrder) === JSON.stringify(q.correctOrder);
+      handleQuestionAnswer(isCorrect);
+    }
+
+    function handleQuestionAnswer(isCorrect, customMsg) {
+      clearInterval(gameState.questionTimer);
+      const player = gameState.players[gameState.activePlayerIndex];
+      const q = gameState.currentQuestion;
+
+      // Update stats
+      player.stats.total += 1;
+      gameState.teacherData.totalAnswered += 1;
+
+      if (!gameState.teacherData.categoryStats[q.category]) {
+        gameState.teacherData.categoryStats[q.category] = { total: 0, correct: 0 };
+      }
+      gameState.teacherData.categoryStats[q.category].total += 1;
+
+      let scoreGain = 0;
+      if (q.difficulty === 'easy') scoreGain = 100;
+      else if (q.difficulty === 'medium') scoreGain = 200;
+      else scoreGain = 300;
+
+      const expBox = document.getElementById('explanationBox');
+      const expHeader = document.getElementById('explanationResultHeader');
+      const expText = document.getElementById('explanationText');
+
+      expBox.classList.remove('hidden');
+
+      // Disable answer buttons
+      document.querySelectorAll('.mcq-opt-btn, .seq-item').forEach(b => b.style.pointerEvents = 'none');
+      document.getElementById('sequenceSubmitBox').classList.add('hidden');
+
+      if (isCorrect) {
+        player.score += scoreGain;
+        player.stats.correct += 1;
+        gameState.teacherData.totalCorrect += 1;
+        gameState.teacherData.categoryStats[q.category].correct += 1;
+
+        playSound('correct');
+        expBox.className = 'rounded-xl p-4 border bg-emerald-950/60 border-emerald-500/50 space-y-2';
+        expHeader.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-xl"></i> <span class="text-emerald-300">ถูกต้อง! (+${scoreGain} คะแนน)</span>`;
+        logActivity(`<span class="text-emerald-400">✅ ${player.name} ตอบถูก! (+${scoreGain} คะแนน)</span>`);
+      } else {
+        playSound('wrong');
+        if (!player.stats.wrongTopics[q.category]) player.stats.wrongTopics[q.category] = 0;
+        player.stats.wrongTopics[q.category] += 1;
+
+        expBox.className = 'rounded-xl p-4 border bg-rose-950/60 border-rose-500/50 space-y-2';
+        expHeader.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-400 text-xl"></i> <span class="text-rose-300">${customMsg || 'คำตอบยังไม่ถูกต้อง! (+0 คะแนน)'}</span>`;
+        logActivity(`<span class="text-rose-400">❌ ${player.name} ตอบผิดในหมวด ${q.category}</span>`);
+      }
+
+      expText.innerHTML = `
+        <div class="font-semibold text-slate-200 mb-1">เฉลยและคำอธิบาย:</div>
+        <div>${q.explanation}</div>
+      `;
+
+      updateHeaderStats();
+    }
+
+    function closeQuestionModal() {
+      document.getElementById('questionModal').classList.add('hidden');
+      nextTurn();
+    }
+
+    function showEventModal(title, desc, colorClass, iconStr) {
+      document.getElementById('eventTitle').innerText = title;
+      document.getElementById('eventDescription').innerText = desc;
+      const iconBox = document.getElementById('eventIconBox');
+      iconBox.className = `w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl shadow-lg bg-slate-800 ${colorClass}`;
+      iconBox.innerHTML = `<i class="fa-solid ${iconStr}"></i>`;
+      document.getElementById('eventModal').classList.remove('hidden');
+    }
+
+    function closeEventModal() {
+      document.getElementById('eventModal').classList.add('hidden');
+      nextTurn();
+    }
+
+    function nextTurn() {
+      gameState.activePlayerIndex = (gameState.activePlayerIndex + 1) % gameState.playerCount;
+      const nextPlayer = gameState.players[gameState.activePlayerIndex];
+
+      const rollBtn = document.getElementById('rollDiceBtn');
+      rollBtn.disabled = false;
+      rollBtn.classList.remove('opacity-50');
+
+      document.getElementById('diceResultText').innerText = 'กดปุ่มเพื่อทอยแต้ม (1-6)';
+      updateHeaderStats();
+    }
+
+    function openTeacherDashboard() {
+      const td = gameState.teacherData;
+      document.getElementById('tdTotalAnswered').innerText = td.totalAnswered;
+      
+      const acc = td.totalAnswered > 0 ? Math.round((td.totalCorrect / td.totalAnswered) * 100) : 0;
+      document.getElementById('tdOverallAccuracy').innerText = `${acc}%`;
+
+      // Find weakest topic
+      let minAcc = 101;
+      let weakTopic = 'ยังไม่มีข้อมูล';
+
+      const topicContainer = document.getElementById('topicBreakdownContainer');
+      topicContainer.innerHTML = '';
+
+      Object.keys(td.categoryStats).forEach(cat => {
+        const stat = td.categoryStats[cat];
+        const topicAcc = Math.round((stat.correct / stat.total) * 100);
+
+        if (topicAcc < minAcc) {
+          minAcc = topicAcc;
+          weakTopic = cat;
+        }
+
+        topicContainer.innerHTML += `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs text-slate-300">
+              <span>${cat}</span>
+              <span class="font-bold ${topicAcc >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${topicAcc}% (${stat.correct}/${stat.total})</span>
+            </div>
+            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full ${topicAcc >= 70 ? 'bg-emerald-500' : 'bg-amber-500'}" style="width: ${topicAcc}%"></div>
+            </div>
+          </div>
+        `;
+      });
+
+      if (Object.keys(td.categoryStats).length === 0) {
+        topicContainer.innerHTML = `<div class="text-xs text-slate-500 italic">ยังไม่มีข้อมูลการตอบคำถามในเซสชันนี้</div>`;
+      }
+
+      document.getElementById('tdWeakTopic').innerText = weakTopic;
+
+      // Table individual breakdown
+      const tableBody = document.getElementById('studentStatsTable');
+      tableBody.innerHTML = '';
+
+      gameState.players.forEach(p => {
+        const pAcc = p.stats.total > 0 ? Math.round((p.stats.correct / p.stats.total) * 100) : 0;
+        tableBody.innerHTML += `
+          <tr class="hover:bg-slate-800/50">
+            <td class="p-3 font-semibold text-white flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full ${p.avatar.bg}"></span>
+              ${p.name}
+            </td>
+            <td class="p-3 text-amber-400 font-bold">${p.score}</td>
+            <td class="p-3">${p.stats.correct} / ${p.stats.total}</td>
+            <td class="p-3 font-bold ${pAcc >= 70 ? 'text-emerald-400' : 'text-amber-400'}">${pAcc}%</td>
+          </tr>
+        `;
+      });
+
+      // Pedagogical recommendations
+      const recText = document.getElementById('teacherRecommendationText');
+      if (acc >= 80) {
+        recText.innerText = 'นักเรียนส่วนใหญ่เข้าใจเนื้อหาการแก้ปัญหาและสัญลักษณ์ผังงานในระดับดีเยี่ยม สามารถจัดกิจกรรมท้าทายการเขียนโปรแกรมรหัสจำลองต่อได้';
+      } else if (acc >= 50) {
+        recText.innerText = `ควรทบทวนเพิ่มเติมเกี่ยวกับเรื่อง "${weakTopic}" โดยใช้ผังงานตัวอย่างและแบบฝึกหัดการวิเคราะห์สถานการณ์เพิ่มเติม`;
+      } else {
+        recText.innerText = 'ควรทบทวนพื้นฐานสัญลักษณ์ผังงาน (Terminal, Process, Decision) และโครงสร้างการทำงานทั้ง 3 แบบก่อนทำแบบทดสอบถัดไป';
+      }
+
+      document.getElementById('teacherModal').classList.remove('hidden');
+    }
+
+    function closeTeacherDashboard() {
+      document.getElementById('teacherModal').classList.add('hidden');
+    }
+
+    function checkGameOver() {
+      // Sort players by score
+      const sorted = [...gameState.players].sort((a, b) => b.score - a.score);
+      const leaderboard = document.getElementById('leaderboardList');
+      leaderboard.innerHTML = '';
+
+      const medals = ['text-amber-400 fa-medal', 'text-slate-300 fa-medal', 'text-amber-600 fa-medal', 'text-slate-500 fa-award'];
+
+      sorted.forEach((p, rank) => {
+        leaderboard.innerHTML += `
+          <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-800 border ${rank === 0 ? 'border-amber-500/50 bg-amber-950/20' : 'border-slate-700'}">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid ${medals[rank] || 'fa-award'} text-2xl"></i>
+              <div class="text-left">
+                <div class="font-bold text-white text-base">${p.name}</div>
+                <div class="text-xs text-slate-400">เดินครบ ${p.laps} รอบกระดาน</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-lg font-extrabold text-amber-400">${p.score} pt</div>
+              <div class="text-[10px] text-emerald-400 font-semibold">อันดับที่ ${rank + 1}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      playSound('bonus');
+      document.getElementById('gameOverModal').classList.remove('hidden');
+    }
+
+    function resetGamePrompt() {
+      if (confirm('คุณต้องการรีเซ็ตเกมและกลับไปหน้าตั้งค่าใช่หรือไม่?')) {
+        location.reload();
+      }
+    }
+  </script>
+</body>
+</html>
